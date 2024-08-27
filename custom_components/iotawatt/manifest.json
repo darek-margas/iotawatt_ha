@@ -3,14 +3,9 @@
   "name": "IoTaWatt",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/iotawatt",
-  "issue_tracker": "https://github.com/gtdiehl/iotawatt_ha",
-  "requirements": [
-    "iotawattpy==0.1.0"
-  ],
-  "codeowners": [
-    "@gtdiehl",
-    "@jyavenard"
-  ],
-  "version": "0.2.1",
+  "issue_tracker": "https://github.com/darek-margas/iotawatt_ha",
+  "requirements": [ "ha-iotawattpy==0.1.2" ],
+  "codeowners": [ "@gtdiehl", "@jyavenard" ],
+  "version": "2024.8.4",
   "iot_class": "local_polling"
 }
