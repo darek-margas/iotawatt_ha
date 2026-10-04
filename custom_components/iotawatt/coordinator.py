@@ -64,7 +64,7 @@ class IotawattUpdater(DataUpdateCoordinator[dict[str, Any]]):
             try:
                 is_authenticated = await api.connect()
             except CONNECTION_ERRORS as err:
-                raise UpdateFailed("Connection failed") from err
+                raise UpdateFailed(f"Connection failed: {err!r}") from err
 
             if not is_authenticated:
                 raise ConfigEntryAuthFailed("Authentication error")
@@ -77,5 +77,5 @@ class IotawattUpdater(DataUpdateCoordinator[dict[str, Any]]):
             # Reconnect on the next refresh, so a changed password is detected
             # and reported as an authentication failure.
             self.api = None
-            raise UpdateFailed(f"Error communicating with IoTaWatt: {err}") from err
+            raise UpdateFailed(f"Error communicating with IoTaWatt: {err!r}") from err
         return self.api.getSensors()
