@@ -147,7 +147,7 @@ async def async_setup_entry(
         ]
         async_add_entities(entities)
 
-    coordinator.async_add_listener(new_data_received)
+    config_entry.async_on_unload(coordinator.async_add_listener(new_data_received))
 
 
 class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
