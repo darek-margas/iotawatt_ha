@@ -1,11 +1,12 @@
 {
   "domain": "iotawatt",
   "name": "IoTaWatt",
+  "codeowners": ["@darek-margas"],
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/iotawatt",
-  "issue_tracker": "https://github.com/darek-margas/iotawatt_ha",
-  "requirements": [ "ha-iotawattpy==0.1.2" ],
-  "codeowners": [ "@gtdiehl", "@jyavenard" ],
-  "version": "2026.10.4.2",
-  "iot_class": "local_polling"
+  "documentation": "https://github.com/darek-margas/iotawatt_ha",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/darek-margas/iotawatt_ha/issues",
+  "requirements": ["ha-iotawattpy==0.1.2"],
+  "version": "2026.10.4.3"
 }

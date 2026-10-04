@@ -14,8 +14,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_HOST,
     PERCENTAGE,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
@@ -23,16 +23,17 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfReactivePower,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, VOLT_AMPERE_REACTIVE, VOLT_AMPERE_REACTIVE_HOURS
-from .coordinator import IotawattUpdater
+from .const import DOMAIN, VOLT_AMPERE_REACTIVE_HOURS
+from .coordinator import IotawattConfigEntry, IotawattUpdater
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,9 +90,9 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, IotaWattSensorEntityDescription] = {
     ),
     "VAR": IotaWattSensorEntityDescription(
         key="VAR",
-        native_unit_of_measurement=VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:flash",
+        device_class=SensorDeviceClass.REACTIVE_POWER,
         entity_registry_enabled_default=False,
     ),
     "VARh": IotaWattSensorEntityDescription(
@@ -113,11 +114,11 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, IotaWattSensorEntityDescription] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: IotawattConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add sensors for passed config_entry in HA."""
-    coordinator: IotawattUpdater = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = config_entry.runtime_data
     created = set()
 
     @callback
@@ -183,12 +184,14 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
     @property
     def device_info(self) -> dr.DeviceInfo:
         """Return device info."""
+        mac = self._sensor_data.hub_mac_address
         return dr.DeviceInfo(
-            connections={
-                (dr.CONNECTION_NETWORK_MAC, self._sensor_data.hub_mac_address)
-            },
+            identifiers={(DOMAIN, mac)},
+            connections={(dr.CONNECTION_NETWORK_MAC, mac)},
             manufacturer="IoTaWatt",
             model="IoTaWatt",
+            name="IoTaWatt",
+            configuration_url=f"http://{self.coordinator.config_entry.data[CONF_HOST]}",
         )
 
     @callback

@@ -101,6 +101,13 @@ Go to **Settings → Devices & services → Add integration → IoTaWatt** and
 enter the IoTaWatt's host name or IP address. If authentication is enabled on
 the device, you'll be asked for the username and password.
 
+- If the IoTaWatt's address changes, use **Reconfigure** on the integration
+  entry instead of removing and re-adding it.
+- If the IoTaWatt's password changes, Home Assistant shows a notification
+  asking you to re-enter the credentials.
+
+Requires Home Assistant 2025.2 or newer.
+
 ## Polling
 
 By default the integration polls the IoTaWatt every 30 seconds. The IoTaWatt

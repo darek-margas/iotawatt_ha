@@ -1,23 +1,48 @@
 {
     "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of your IoTaWatt device."
+                }
+            },
+            "auth": {
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                },
+                "description": "The IoTawatt device requires authentication. Please enter the username and password and click the Submit button."
+            },
+            "reauth_confirm": {
+                "title": "Reauthenticate integration",
+                "description": "Authentication with the IoTaWatt at {host} failed. Please enter the current username and password.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                }
+            },
+            "reconfigure": {
+                "description": "Change the address of your IoTaWatt device.",
+                "data": {
+                    "host": "Host"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of your IoTaWatt device."
+                }
+            }
+        },
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_auth": "Invalid authentication",
             "unknown": "Unexpected error"
         },
-        "step": {
-            "auth": {
-                "data": {
-                    "password": "Password",
-                    "username": "Username"
-                },
-                "description": "The IoTawatt device requires authentication. Please enter the username and password and click the Submit button."
-            },
-            "user": {
-                "data": {
-                    "host": "Host"
-                }
-            }
+        "abort": {
+            "already_configured": "Device is already configured",
+            "reauth_successful": "Re-authentication was successful",
+            "reconfigure_successful": "Re-configuration was successful"
         }
     }
 }
