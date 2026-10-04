@@ -25,7 +25,7 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -172,17 +172,13 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             )
         elif data.getType() == "Output":
             self._attr_unique_id = f"{data.hub_mac_address}-output-{data.getSourceName()}"
+        self._attr_name = data.getName()
         self.entity_description = entity_description
 
     @property
     def _sensor_data(self) -> Sensor:
         """Return sensor data."""
         return self.coordinator.data["sensors"][self._key]
-
-    @property
-    def name(self) -> str | None:
-        """Return name of the entity."""
-        return self._sensor_data.getName()
 
     @property
     def device_info(self) -> dr.DeviceInfo:
@@ -199,18 +195,23 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         if self._key not in self.coordinator.data["sensors"]:
-            if self._attr_unique_id:
-                er.async_get(self.hass).async_remove(self.entity_id)
-            else:
-                self.hass.async_create_task(self.async_remove())
+            # Keep the entity and its registry entry; it is shown as unavailable
+            # until the sensor is reported by the IoTaWatt again.
+            self.async_write_ha_state()
             return
 
+        self._attr_name = self._sensor_data.getName()
         if (begin := self._sensor_data.getBegin()) and (
             last_reset := dt_util.parse_datetime(begin)
         ):
             self._attr_last_reset = last_reset
 
         super()._handle_coordinator_update()
+
+    @property
+    def available(self) -> bool:
+        """Return if the sensor is still reported by the IoTaWatt."""
+        return super().available and self._key in self.coordinator.data["sensors"]
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
