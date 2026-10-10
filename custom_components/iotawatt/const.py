@@ -7,7 +7,6 @@ import json
 import httpx
 
 DOMAIN = "iotawatt"
-VOLT_AMPERE_REACTIVE = "VAR"
 VOLT_AMPERE_REACTIVE_HOURS = "VARh"
 
 CONF_LIFETIME_SENSORS = "lifetime_sensors"
