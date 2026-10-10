@@ -112,6 +112,9 @@ Requires Home Assistant 2025.6 or newer.
 
 Open the integration entry → **Configure** to turn on optional sensors. Both are
 off by default.
+These options need the `ha-iotawattpy` 0.3.0 library, which comes with Home
+Assistant 2026.10. On older Home Assistant versions the integration uses the
+library version already installed, and the options aren't available.
 
 - **Lifetime energy sensors**: adds an energy sensor for every power input and
   output that counts from the start of the IoTaWatt's datalog and never resets

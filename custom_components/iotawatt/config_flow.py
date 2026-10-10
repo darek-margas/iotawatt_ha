@@ -31,6 +31,7 @@ from .const import (
     CONNECTION_ERRORS,
     DOMAIN,
 )
+from .coordinator import SUPPORTS_OPTIONAL_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -206,6 +207,9 @@ class IotawattOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Choose which optional sensors to create."""
+        if not SUPPORTS_OPTIONAL_SENSORS:
+            return self.async_abort(reason="library_too_old")
+
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 

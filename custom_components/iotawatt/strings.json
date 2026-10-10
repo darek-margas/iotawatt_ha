@@ -58,6 +58,9 @@
           "integrate_reactive": "Report VARh sensors as reactive energy accumulated since the start of the IoTaWatt datalog, instead of the reactive energy of the last 30 seconds."
         }
       }
+    },
+    "abort": {
+      "library_too_old": "These optional sensors need ha-iotawattpy 0.3.0 or newer, which is included with Home Assistant 2026.10. Update Home Assistant to use them."
     }
   }
 }

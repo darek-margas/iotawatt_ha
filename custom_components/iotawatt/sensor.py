@@ -24,7 +24,6 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
     UnitOfReactiveEnergy,
-    UnitOfReactivePower,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
@@ -33,7 +32,12 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_INTEGRATE_REACTIVE, DOMAIN, VOLT_AMPERE_REACTIVE_HOURS
+from .const import (
+    CONF_INTEGRATE_REACTIVE,
+    DOMAIN,
+    VOLT_AMPERE_REACTIVE,
+    VOLT_AMPERE_REACTIVE_HOURS,
+)
 from .coordinator import IotawattConfigEntry, IotawattUpdater
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,9 +95,9 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, IotaWattSensorEntityDescription] = {
     ),
     "VAR": IotaWattSensorEntityDescription(
         key="VAR",
-        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement=VOLT_AMPERE_REACTIVE,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.REACTIVE_POWER,
+        icon="mdi:flash",
         entity_registry_enabled_default=False,
     ),
     "VARh": IotaWattSensorEntityDescription(
@@ -134,12 +138,17 @@ REACTIVE_ENERGY_TOTAL_DESCRIPTION = IotaWattSensorEntityDescription(
 )
 
 
+def _is_lifetime(data: Sensor) -> bool:
+    """Return if a sensor is a lifetime energy sensor (ha-iotawattpy 0.3.0+)."""
+    return bool((is_lifetime := getattr(data, "getLifetime", None)) and is_lifetime())
+
+
 def _get_description(
     entry: IotawattConfigEntry, data: Sensor
 ) -> IotaWattSensorEntityDescription:
     """Return the entity description for a sensor."""
     unit = data.getUnit()
-    if unit == "WattHours" and data.getLifetime():
+    if unit == "WattHours" and _is_lifetime(data):
         return LIFETIME_ENERGY_DESCRIPTION
     if unit == "VARh" and entry.options.get(CONF_INTEGRATE_REACTIVE, False):
         return REACTIVE_ENERGY_TOTAL_DESCRIPTION
@@ -207,7 +216,7 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             )
         elif data.getType() == "Output":
             self._attr_unique_id = f"{data.hub_mac_address}-output-{data.getSourceName()}"
-        if self._attr_unique_id and data.getLifetime():
+        if self._attr_unique_id and _is_lifetime(data):
             # Lifetime sensors share the source name and unit of the daily
             # energy sensors, so they need their own suffix.
             self._attr_unique_id += "-lifetime"
@@ -229,8 +238,7 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             connections={(dr.CONNECTION_NETWORK_MAC, mac)},
             manufacturer="IoTaWatt",
             model="IoTaWatt",
-            # No device name: HA 2026.10+ prefixes every friendly name with it.
-            name=None,
+            name="IoTaWatt",
             configuration_url=f"http://{self.coordinator.config_entry.data[CONF_HOST]}",
         )
 
