@@ -7,6 +7,7 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/darek-margas/iotawatt_ha/issues",
-  "requirements": ["ha-iotawattpy==0.1.2"],
-  "version": "2026.10.4.3"
+  "loggers": ["iotawattpy"],
+  "requirements": ["ha-iotawattpy==0.3.0"],
+  "version": "2026.10.10"
 }

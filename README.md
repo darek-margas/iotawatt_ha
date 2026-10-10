@@ -106,7 +106,21 @@ the device, you'll be asked for the username and password.
 - If the IoTaWatt's password changes, Home Assistant shows a notification
   asking you to re-enter the credentials.
 
-Requires Home Assistant 2025.2 or newer.
+Requires Home Assistant 2025.6 or newer.
+
+## Options
+
+Open the integration entry → **Configure** to turn on optional sensors. Both are
+off by default.
+
+- **Lifetime energy sensors**: adds an energy sensor for every power input and
+  output that counts from the start of the IoTaWatt's datalog and never resets
+  (unlike the standard daily energy sensors, which restart at midnight). These
+  are ideal for the Energy dashboard. They are shown in kWh.
+- **Reactive energy (VARh) as running total**: makes VARh outputs report
+  reactive energy accumulated since the start of the datalog, instead of the
+  reactive energy of the last 30 seconds, so they can be used in long-term
+  statistics. The unit changes from `VARh` to `varh`.
 
 ## Polling
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 
@@ -16,12 +16,18 @@ from homeassistant.helpers import httpx_client
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONNECTION_ERRORS
+from .const import CONF_INTEGRATE_REACTIVE, CONF_LIFETIME_SENSORS, CONNECTION_ERRORS
 
 _LOGGER = logging.getLogger(__name__)
 
 # Matches iotwatt data log interval
 REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
+
+# The library integrates "energy since the previous update" from lastUpdate, and
+# warns when two updates fall in the same 5 second window. Those per-interval
+# sensors are not created (includeNonTotalSensors=False), so that query never
+# runs; a fixed start time just keeps the library from logging the warning.
+_UNUSED_INTERVAL_START = datetime(2000, 1, 1, tzinfo=UTC)
 
 type IotawattConfigEntry = ConfigEntry[IotawattUpdater]
 
@@ -60,6 +66,10 @@ class IotawattUpdater(DataUpdateCoordinator[dict[str, Any]]):
                 entry.data.get(CONF_PASSWORD),
                 integratedInterval="d",
                 includeNonTotalSensors=False,
+                includeLifetimeSensors=entry.options.get(CONF_LIFETIME_SENSORS, False),
+                integrateReactiveSensors=entry.options.get(
+                    CONF_INTEGRATE_REACTIVE, False
+                ),
             )
             try:
                 is_authenticated = await api.connect()
@@ -72,7 +82,7 @@ class IotawattUpdater(DataUpdateCoordinator[dict[str, Any]]):
             self.api = api
 
         try:
-            await self.api.update()
+            await self.api.update(lastUpdate=_UNUSED_INTERVAL_START)
         except CONNECTION_ERRORS as err:
             # Reconnect on the next refresh, so a changed password is detected
             # and reported as an authentication failure.

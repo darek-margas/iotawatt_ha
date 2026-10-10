@@ -9,4 +9,7 @@ import httpx
 DOMAIN = "iotawatt"
 VOLT_AMPERE_REACTIVE_HOURS = "VARh"
 
+CONF_LIFETIME_SENSORS = "lifetime_sensors"
+CONF_INTEGRATE_REACTIVE = "integrate_reactive"
+
 CONNECTION_ERRORS = (KeyError, json.JSONDecodeError, httpx.HTTPError)

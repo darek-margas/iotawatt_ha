@@ -23,6 +23,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfReactiveEnergy,
     UnitOfReactivePower,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -32,7 +33,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, VOLT_AMPERE_REACTIVE_HOURS
+from .const import CONF_INTEGRATE_REACTIVE, DOMAIN, VOLT_AMPERE_REACTIVE_HOURS
 from .coordinator import IotawattConfigEntry, IotawattUpdater
 
 _LOGGER = logging.getLogger(__name__)
@@ -112,6 +113,41 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, IotaWattSensorEntityDescription] = {
 }
 
 
+# Energy integrated since the start of the IoTaWatt datalog. It never resets,
+# so it suits the Energy dashboard and total_increasing statistics.
+LIFETIME_ENERGY_DESCRIPTION = IotaWattSensorEntityDescription(
+    key="WattHoursLifetime",
+    native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+    suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    state_class=SensorStateClass.TOTAL_INCREASING,
+    device_class=SensorDeviceClass.ENERGY,
+)
+
+# Reactive energy integrated since the start of the IoTaWatt datalog. Reactive
+# energy can be negative (capacitive loads), so it is a total, not increasing.
+REACTIVE_ENERGY_TOTAL_DESCRIPTION = IotaWattSensorEntityDescription(
+    key="VARhTotal",
+    native_unit_of_measurement=UnitOfReactiveEnergy.VOLT_AMPERE_REACTIVE_HOUR,
+    state_class=SensorStateClass.TOTAL,
+    device_class=SensorDeviceClass.REACTIVE_ENERGY,
+    entity_registry_enabled_default=False,
+)
+
+
+def _get_description(
+    entry: IotawattConfigEntry, data: Sensor
+) -> IotaWattSensorEntityDescription:
+    """Return the entity description for a sensor."""
+    unit = data.getUnit()
+    if unit == "WattHours" and data.getLifetime():
+        return LIFETIME_ENERGY_DESCRIPTION
+    if unit == "VARh" and entry.options.get(CONF_INTEGRATE_REACTIVE, False):
+        return REACTIVE_ENERGY_TOTAL_DESCRIPTION
+    return ENTITY_DESCRIPTION_KEY_MAP.get(
+        unit, IotaWattSensorEntityDescription(key="base_sensor")
+    )
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: IotawattConfigEntry,
@@ -126,9 +162,7 @@ async def async_setup_entry(
         """Create a sensor entity."""
         created.add(key)
         data = coordinator.data["sensors"][key]
-        description = ENTITY_DESCRIPTION_KEY_MAP.get(
-            data.getUnit(), IotaWattSensorEntityDescription(key="base_sensor")
-        )
+        description = _get_description(config_entry, data)
 
         return IotaWattSensor(
             coordinator=coordinator,
@@ -173,8 +207,13 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             )
         elif data.getType() == "Output":
             self._attr_unique_id = f"{data.hub_mac_address}-output-{data.getSourceName()}"
+        if self._attr_unique_id and data.getLifetime():
+            # Lifetime sensors share the source name and unit of the daily
+            # energy sensors, so they need their own suffix.
+            self._attr_unique_id += "-lifetime"
         self._attr_name = data.getName()
         self.entity_description = entity_description
+        self._update_last_reset()
 
     @property
     def _sensor_data(self) -> Sensor:
@@ -190,7 +229,8 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             connections={(dr.CONNECTION_NETWORK_MAC, mac)},
             manufacturer="IoTaWatt",
             model="IoTaWatt",
-            name="IoTaWatt",
+            # No device name: HA 2026.10+ prefixes every friendly name with it.
+            name=None,
             configuration_url=f"http://{self.coordinator.config_entry.data[CONF_HOST]}",
         )
 
@@ -204,12 +244,18 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             return
 
         self._attr_name = self._sensor_data.getName()
-        if (begin := self._sensor_data.getBegin()) and (
-            last_reset := dt_util.parse_datetime(begin)
+        self._update_last_reset()
+        super()._handle_coordinator_update()
+
+    def _update_last_reset(self) -> None:
+        """Set last_reset from the start of the IoTaWatt integration period."""
+        # Only the daily energy sensors reset; lifetime totals have no last_reset.
+        if (
+            self.entity_description.key == "WattHours"
+            and (begin := self._sensor_data.getBegin())
+            and (last_reset := dt_util.parse_datetime(begin))
         ):
             self._attr_last_reset = last_reset
-
-        super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:

@@ -44,5 +44,20 @@
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
       "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "IoTaWatt options",
+        "data": {
+          "lifetime_sensors": "Lifetime energy sensors",
+          "integrate_reactive": "Reactive energy (VARh) as running total"
+        },
+        "data_description": {
+          "lifetime_sensors": "Add an energy sensor for every power input and output that counts since the start of the IoTaWatt datalog and never resets. Suited to the Energy dashboard.",
+          "integrate_reactive": "Report VARh sensors as reactive energy accumulated since the start of the IoTaWatt datalog, instead of the reactive energy of the last 30 seconds."
+        }
+      }
+    }
   }
 }

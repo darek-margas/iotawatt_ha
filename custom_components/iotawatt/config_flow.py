@@ -11,11 +11,13 @@ import voluptuous as vol
 
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
+    ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlow,
 )
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import httpx_client
 from homeassistant.helpers.selector import (
     TextSelector,
@@ -23,7 +25,12 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .const import CONNECTION_ERRORS, DOMAIN
+from .const import (
+    CONF_INTEGRATE_REACTIVE,
+    CONF_LIFETIME_SENSORS,
+    CONNECTION_ERRORS,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,6 +78,12 @@ class IOTaWattConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize."""
         self._data: dict[str, Any] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> IotawattOptionsFlow:
+        """Return the options flow."""
+        return IotawattOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -184,3 +197,31 @@ class IOTaWattConfigFlow(ConfigFlow, domain=DOMAIN):
         if title == entry.data[CONF_HOST]:
             title = data[CONF_HOST]
         return self.async_update_reload_and_abort(entry, title=title, data=data)
+
+
+class IotawattOptionsFlow(OptionsFlow):
+    """Handle IoTaWatt options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose which optional sensors to create."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        options = self.config_entry.options
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_LIFETIME_SENSORS,
+                        default=options.get(CONF_LIFETIME_SENSORS, False),
+                    ): bool,
+                    vol.Required(
+                        CONF_INTEGRATE_REACTIVE,
+                        default=options.get(CONF_INTEGRATE_REACTIVE, False),
+                    ): bool,
+                }
+            ),
+        )
