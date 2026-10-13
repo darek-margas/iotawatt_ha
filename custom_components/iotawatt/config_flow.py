@@ -7,7 +7,7 @@ import logging
 from typing import Any
 
 from iotawattpy.iotawatt import Iotawatt
-import voluptuous as vol
+import probatio
 
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
@@ -31,19 +31,18 @@ from .const import (
     CONNECTION_ERRORS,
     DOMAIN,
 )
-from .coordinator import SUPPORTS_OPTIONAL_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
 
 PASSWORD_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
 
-def _auth_schema(username: str = "") -> vol.Schema:
+def _auth_schema(username: str = "") -> probatio.Schema:
     """Return the schema for the username and password form."""
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Required(CONF_USERNAME, default=username): str,
-            vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
+            probatio.Required(CONF_USERNAME, default=username): str,
+            probatio.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
         }
     )
 
@@ -93,9 +92,9 @@ class IOTaWattConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is None:
             user_input = {}
 
-        schema = vol.Schema(
+        schema = probatio.Schema(
             {
-                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
+                probatio.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
             }
         )
         if not user_input:
@@ -180,9 +179,9 @@ class IOTaWattConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reconfigure",
-            data_schema=vol.Schema(
+            data_schema=probatio.Schema(
                 {
-                    vol.Required(
+                    probatio.Required(
                         CONF_HOST,
                         default=(user_input or entry.data)[CONF_HOST],
                     ): str,
@@ -207,22 +206,19 @@ class IotawattOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Choose which optional sensors to create."""
-        if not SUPPORTS_OPTIONAL_SENSORS:
-            return self.async_abort(reason="library_too_old")
-
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
         options = self.config_entry.options
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
+            data_schema=probatio.Schema(
                 {
-                    vol.Required(
+                    probatio.Required(
                         CONF_LIFETIME_SENSORS,
                         default=options.get(CONF_LIFETIME_SENSORS, False),
                     ): bool,
-                    vol.Required(
+                    probatio.Required(
                         CONF_INTEGRATE_REACTIVE,
                         default=options.get(CONF_INTEGRATE_REACTIVE, False),
                     ): bool,

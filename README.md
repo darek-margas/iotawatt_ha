@@ -106,15 +106,13 @@ the device, you'll be asked for the username and password.
 - If the IoTaWatt's password changes, Home Assistant shows a notification
   asking you to re-enter the credentials.
 
-Requires Home Assistant 2025.6 or newer.
+Requires Home Assistant 2026.10 or newer. For older Home Assistant versions,
+install release 2026.10.10.
 
 ## Options
 
 Open the integration entry → **Configure** to turn on optional sensors. Both are
 off by default.
-These options need the `ha-iotawattpy` 0.3.0 library, which comes with Home
-Assistant 2026.10. On older Home Assistant versions the integration uses the
-library version already installed, and the options aren't available.
 
 - **Lifetime energy sensors**: adds an energy sensor for every power input and
   output that counts from the start of the IoTaWatt's datalog and never resets

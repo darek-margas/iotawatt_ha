@@ -135,8 +135,8 @@ REACTIVE_ENERGY_TOTAL_DESCRIPTION = IotaWattSensorEntityDescription(
 
 
 def _is_lifetime(data: Sensor) -> bool:
-    """Return if a sensor is a lifetime energy sensor (ha-iotawattpy 0.3.0+)."""
-    return bool((is_lifetime := getattr(data, "getLifetime", None)) and is_lifetime())
+    """Return if a sensor is a lifetime energy sensor."""
+    return data.getLifetime()
 
 
 def _get_description(
