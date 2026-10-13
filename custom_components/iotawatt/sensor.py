@@ -206,6 +206,7 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
 
         self._key = key
         self._data = data = coordinator.data["sensors"][key]
+        self._attr_unique_id = None
         if data.getType() == "Input":
             self._attr_unique_id = (
                 f"{data.hub_mac_address}-input-{data.getChannel()}-{data.getUnit()}"
