@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 
+import httpx
 from iotawattpy.iotawatt import Iotawatt
 
 from homeassistant.config_entries import ConfigEntry
@@ -87,5 +88,10 @@ class IotawattUpdater(DataUpdateCoordinator[dict[str, Any]]):
             # Reconnect on the next refresh, so a changed password is detected
             # and reported as an authentication failure.
             self.api = None
+            if (
+                isinstance(err, httpx.HTTPStatusError)
+                and err.response.status_code == httpx.codes.UNAUTHORIZED
+            ):
+                raise ConfigEntryAuthFailed("Authentication error") from err
             raise UpdateFailed(f"Error communicating with IoTaWatt: {err}") from err
         return self.api.getSensors()

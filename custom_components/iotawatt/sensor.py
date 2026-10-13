@@ -205,7 +205,7 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
         super().__init__(coordinator=coordinator)
 
         self._key = key
-        data = self._sensor_data
+        self._data = data = coordinator.data["sensors"][key]
         if data.getType() == "Input":
             self._attr_unique_id = (
                 f"{data.hub_mac_address}-input-{data.getChannel()}-{data.getUnit()}"
@@ -222,8 +222,12 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
 
     @property
     def _sensor_data(self) -> Sensor:
-        """Return sensor data."""
-        return self.coordinator.data["sensors"][self._key]
+        """Return the last sensor data reported by the IoTaWatt.
+
+        Kept while the sensor is missing from updates, so metadata such as the
+        device info can still be read while the entity is unavailable.
+        """
+        return self._data
 
     @property
     def device_info(self) -> dr.DeviceInfo:
@@ -247,6 +251,7 @@ class IotaWattSensor(CoordinatorEntity[IotawattUpdater], SensorEntity):
             self.async_write_ha_state()
             return
 
+        self._data = self.coordinator.data["sensors"][self._key]
         self._attr_name = self._sensor_data.getName()
         self._update_last_reset()
         super()._handle_coordinator_update()
